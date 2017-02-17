@@ -25,18 +25,9 @@ add_action( 'plugins_loaded', function() {
 	});
 
 	new \calderawp\eddBundleUpdates\init;
-	new \calderawp\eddBundleUpdates\email;
-
-
+	new \calderawp\eddBundleUpdates\emails\init;
 
 });
-
-
-
-function cwp_edd_process_payment( $post ){
-	$payment = new EDD_Payment( $post->ID );
-	( new \calderawp\eddBundleUpdates\handlers\bundles( $payment, 45191 ) )->run();
-}
 
 if( ! function_exists( 'cwp_update_emails_post_type' )) {
 
@@ -51,7 +42,7 @@ if( ! function_exists( 'cwp_update_emails_post_type' )) {
 			'label'                 => 'Update Email',
 			'description'           => 'Post Type Description',
 			'labels'                => $labels,
-			'supports'              => array( 'title', 'editor'),
+			'supports'              => array( 'title', 'custom-fields' ),
 			'hierarchical'          => false,
 			'public'                => false,
 			'show_ui'               => true,
@@ -65,7 +56,7 @@ if( ! function_exists( 'cwp_update_emails_post_type' )) {
 			'publicly_queryable'    => false,
 			'capability_type'       => 'page',
 		);
-		register_post_type( '_update_emails', $args );
+		register_post_type( \calderawp\eddBundleUpdates\emails\queue::POST_TYPE, $args );
 
 	}
 	add_action( 'init', 'cwp__update_emails_post_type', 0 );

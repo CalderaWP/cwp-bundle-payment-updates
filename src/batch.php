@@ -28,6 +28,7 @@ class batch extends Posts {
 		$paymentsQuery = new \EDD_Payments_Query(
 			$this->args
 		);
+
 		$payments = $paymentsQuery->get_payments();
 		$this->set_total_num_results( count( $payments ) );
 		return $payments;

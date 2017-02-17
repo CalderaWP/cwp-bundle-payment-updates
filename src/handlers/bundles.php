@@ -7,6 +7,7 @@
  */
 
 namespace calderawp\eddBundleUpdates\handlers;
+use calderawp\eddBundleUpdates\emails\queue;
 use calderawp\eddBundleUpdates\missing;
 
 
@@ -47,17 +48,20 @@ class bundles {
 	 * Run checks for this payment
 	 */
 	public function run(){
-		$this->bundle_contents = edd_get_bundled_products( $this->bundle_id );
-		foreach ( $this->payment->downloads as $i => $download ){
-			if( $this->download_id == $download[ 'id' ] ){
+		$this->set_bundle_contents();
 
-			}
-		}
-		$this->missing = \EDD_SL_Retroactive_Licensing::generate_license_keys( $this->payment->ID, $this->bundle_id );
+		//Figure out what is missing
 		$this->check_downloads();
+
+		//add licenses
+		\EDD_SL_Retroactive_Licensing::generate_license_keys( $this->payment->ID, $this->bundle_id );
+
+		//If we identified missing downloads save that info and queue an email
 		if( ! empty( $this->missing ) ){
 			$this->save_missing();
+			queue::add( $this->payment );
 		}
+
 	}
 
 	/**
@@ -78,18 +82,25 @@ class bundles {
 		$licenses = \EDD_Software_Licensing::instance()->get_licenses_of_purchase( $this->payment->ID );
 		/** @var \EDD_SL_License $license */
 		foreach ( $licenses as $license ){
-			$currently_licensed[] = $license->download_id;
+			$currently_licensed[] =  $license->download_id;
 		}
 
-		$this->missing = array_diff( $currently_licensed,$this->bundle_contents );
-		foreach ( $this->missing as $i => $missing ){
-			if( ! in_array( $missing, $this->bundle_contents ) ){
-				unset( $this->missing[$i] );
-			}
-		}
+		$this->missing = array_diff( $this->bundle_contents, $currently_licensed );
 
 		$this->missing = array_unique( $this->missing );
 
 
+	}
+
+	/**
+	 * Set bundle contents, removing free downloads
+	 */
+	protected function set_bundle_contents() {
+		$this->bundle_contents = edd_get_bundled_products( $this->bundle_id );
+		foreach ( $this->bundle_contents as $i => $download ){
+			if( edd_is_free_download( $download ) ){
+				unset( $download[ $i ] );
+			}
+		}
 	}
 }

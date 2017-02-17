@@ -1,6 +1,9 @@
 <?php
 
 namespace calderawp\eddBundleUpdates;
+use calderawp\eddBundleUpdates\emails\queue;
+use \calderawp\eddBundleUpdates\emails\email as emailSender;
+use calderawp\eddBundleUpdates\handlers\email;
 
 
 /**
@@ -13,7 +16,7 @@ class init {
 	const TYPE = 'cwp-edd-bundle-update';
 
 	public function __construct() {
-		add_filter(  'loco_register_batch_processor', [ $this, 'make_processor' ], 10, 3 );
+		add_filter( 'loco_register_batch_processor', [ $this, 'make_processor' ], 10, 3 );
 		add_action( 'locomotive_init', [ $this, 'register' ] );
 	}
 
@@ -35,7 +38,6 @@ class init {
 
 		return 'calderawp\eddBundleUpdates\batch';
 
-
 	}
 
 	/**
@@ -45,6 +47,7 @@ class init {
 		foreach (  $this->get_bundles() as $id  ) {
 			$download = edd_get_download( $id );
 
+			// Load one per bundle
 			register_batch_process( array(
 				'name'     => sprintf( 'Update Bundle %s', $download->post_title ),
 				'type'     => static::TYPE,
@@ -52,6 +55,17 @@ class init {
 				'args' => [
 					'download' => $id
 				]
+			) );
+
+			// Add one to handle sending emails
+			register_batch_process( array(
+				'name'     => 'Send the update emails',
+				'type'     => 'post',
+				'callback' => [ $this, 'route_email'],
+				'args'     => array(
+					'posts_per_page' => 10,
+					'post_type'      => queue::POST_TYPE,
+				),
 			) );
 		}
 	}
@@ -79,4 +93,16 @@ class init {
 			}
 		}
 	}
+
+	/**
+	 * Callback for the email batch processor
+	 *
+	 * NOTE: Using one line wrapper as placeholder for more advanced logic later
+	 *
+	 * @param \WP_Post $post
+	 */
+	public function route_email( $post ){
+		return email::email_handler( $post );
+	}
+
 }
