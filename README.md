@@ -5,7 +5,7 @@ After you add a downloads to your bundles, gives all the existing customers the 
 * PHP 7.0+
 * EDD 2.7+
 * EDD Software Licensing 3.5.4+
-* Locomotive from Reactive
+* [Locomotive from reaktiv Studios](https://github.com/reaktivstudios/locomotive)
   * Requires [this branch of Josh's fork](https://github.com/shelob9/locomotive/tree/115-other-processes) for now.
   
 ## Status
